@@ -1,0 +1,10 @@
+{
+	"info": {
+		"id": "en.manhuaus",
+		"name": "ManhuaUS",
+		"version": 1,
+		"url": "https://manhuaus.com",
+		"contentRating": 1,
+		"languages": ["en"]
+	}
+}
