@@ -1,0 +1,13 @@
+{
+	"info": {
+		"id": "en.comick",
+		"name": "Comick",
+		"version": 1,
+		"url": "https://comick.io",
+		"contentRating": 1,
+		"languages": ["en"]
+	},
+	"config": {
+		"hidesFiltersWhileSearching": true
+	}
+}
