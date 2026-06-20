@@ -1,0 +1,21 @@
+[
+	{
+		"type": "group",
+		"title": "Chapters",
+		"footer": "Paywalled and not-yet-released episodes are hidden by default.",
+		"items": [
+			{
+				"type": "switch",
+				"key": "showLocked",
+				"title": "Show paywalled chapters",
+				"default": false
+			},
+			{
+				"type": "switch",
+				"key": "showScheduled",
+				"title": "Show scheduled chapters",
+				"default": false
+			}
+		]
+	}
+]

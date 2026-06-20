@@ -2,7 +2,7 @@
 	"info": {
 		"id": "en.tapas",
 		"name": "Tapas",
-		"version": 1,
+		"version": 2,
 		"url": "https://tapas.io",
 		"contentRating": 1,
 		"languages": ["en"]

@@ -3,7 +3,7 @@ use aidoku::{
 	Chapter, ContentRating, DeepLinkHandler, DeepLinkResult, FilterValue, Manga, MangaPageResult,
 	MangaStatus, Page, PageContent, Result, Source, Viewer,
 	alloc::{String, Vec},
-	imports::net::Request,
+	imports::{defaults::defaults_get, net::Request},
 	prelude::*,
 };
 use chrono::DateTime;
@@ -184,6 +184,8 @@ impl Tapas {
 	/// The episode list is a paginated JSON API; collect every page and keep the
 	/// freely readable episodes (skip paywalled and unpublished/scheduled ones).
 	fn fetch_chapters(&self, series_key: &str) -> Result<Vec<Chapter>> {
+		let show_locked = defaults_get::<bool>("showLocked").unwrap_or(false);
+		let show_scheduled = defaults_get::<bool>("showScheduled").unwrap_or(false);
 		let mut chapters: Vec<Chapter> = Vec::new();
 		let mut page = 1;
 		loop {
@@ -192,12 +194,19 @@ impl Tapas {
 			);
 			let response: ChaptersResponse = fetch_json(url)?;
 			for ep in &response.data.episodes {
-				if ep.scheduled || !(ep.unlocked || ep.free) {
+				let readable = ep.unlocked || ep.free;
+				if (ep.scheduled && !show_scheduled) || (!readable && !show_locked) {
 					continue;
 				}
+				// Mark paywalled episodes so they're distinguishable in the list.
+				let title = if readable {
+					ep.title.clone()
+				} else {
+					format!("🔒 {}", ep.title)
+				};
 				chapters.push(Chapter {
 					key: format!("/episode/{}", ep.id),
-					title: Some(ep.title.clone()).filter(|t| !t.is_empty()),
+					title: Some(title).filter(|t| !t.is_empty()),
 					chapter_number: Some(ep.scene),
 					date_uploaded: ep
 						.publish_date
