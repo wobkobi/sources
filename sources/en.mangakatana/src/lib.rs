@@ -115,14 +115,36 @@ impl Source for MangaKatana {
 		&self,
 		query: Option<String>,
 		page: i32,
-		_filters: Vec<FilterValue>,
+		filters: Vec<FilterValue>,
 	) -> Result<MangaPageResult> {
 		let query = query.unwrap_or_default();
-		let url = if query.is_empty() {
-			format!("{BASE_URL}/manga/page/{page}")
-		} else {
+		// Text search ignores filters; the browse endpoint applies them.
+		let url = if !query.is_empty() {
 			let encoded = query.replace(' ', "+");
 			format!("{BASE_URL}/page/{page}?search={encoded}&search_by=book_name")
+		} else {
+			let mut url = format!("{BASE_URL}/manga/page/{page}?filter=1");
+			for filter in filters {
+				match filter {
+					FilterValue::MultiSelect {
+						id,
+						included,
+						excluded,
+					} if id == "genre" => {
+						if !included.is_empty() {
+							url.push_str(&format!("&include={}", included.join("_")));
+						}
+						if !excluded.is_empty() {
+							url.push_str(&format!("&exclude={}", excluded.join("_")));
+						}
+					}
+					FilterValue::Select { id, value } if !value.is_empty() => {
+						url.push_str(&format!("&{id}={value}"));
+					}
+					_ => {}
+				}
+			}
+			url
 		};
 		let html = request(url)?.html()?;
 
