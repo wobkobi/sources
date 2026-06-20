@@ -53,11 +53,13 @@ impl Source for Mangafreak {
 		&self,
 		query: Option<String>,
 		page: i32,
-		_filters: Vec<FilterValue>,
+		filters: Vec<FilterValue>,
 	) -> Result<MangaPageResult> {
 		let query = query.unwrap_or_default();
 		if query.is_empty() {
 			// No text query: browse the full genre ranking list (paginated).
+			// The advanced (genre/type/status) filters only work alongside a
+			// text query on this site, so they're ignored here.
 			let html = request(format!("{BASE_URL}/Genre/All/{page}"))?.html()?;
 			let entries = html
 				.select("div.ranking_item")
@@ -72,8 +74,57 @@ impl Source for Mangafreak {
 			});
 		}
 
-		let encoded = query.replace(' ', "_");
-		let html = request(format!("{BASE_URL}/Find/{encoded}"))?.html()?;
+		let mut included: Vec<String> = Vec::new();
+		let mut excluded: Vec<String> = Vec::new();
+		let mut type_value = String::new();
+		let mut status_value = String::new();
+		for filter in filters {
+			match filter {
+				FilterValue::MultiSelect {
+					id,
+					included: inc,
+					excluded: exc,
+				} if id == "genre" => {
+					included = inc;
+					excluded = exc;
+				}
+				FilterValue::Select { id, value } if id == "type" => type_value = value,
+				FilterValue::Select { id, value } if id == "status" => status_value = value,
+				_ => {}
+			}
+		}
+
+		let mut url = format!("{BASE_URL}/Find/{}", query.replace(' ', "_"));
+		let type_active = !type_value.is_empty() && type_value != "0";
+		let status_active = !status_value.is_empty() && status_value != "0";
+		if !included.is_empty() || !excluded.is_empty() || type_active || status_active {
+			// 0 = ignore, 1 = include, 2 = exclude, one digit per genre in order.
+			let genres: String = (0..39u32)
+				.map(|i| {
+					let id = format!("{i}");
+					if included.contains(&id) {
+						'1'
+					} else if excluded.contains(&id) {
+						'2'
+					} else {
+						'0'
+					}
+				})
+				.collect();
+			let t = if type_value.is_empty() {
+				"0"
+			} else {
+				&type_value
+			};
+			let s = if status_value.is_empty() {
+				"0"
+			} else {
+				&status_value
+			};
+			url.push_str(&format!("/Genre/{genres}/Type/{t}/Status/{s}"));
+		}
+
+		let html = request(url)?.html()?;
 		let entries = html
 			.select("div.manga_search_item, div.mangaka_search_item")
 			.map(|els| {
