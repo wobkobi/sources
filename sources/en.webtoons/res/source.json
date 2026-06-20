@@ -2,7 +2,7 @@
 	"info": {
 		"id": "en.webtoons",
 		"name": "WEBTOON",
-		"version": 1,
+		"version": 2,
 		"url": "https://www.webtoons.com",
 		"contentRating": 0,
 		"languages": ["en"]

@@ -3,7 +3,7 @@ use aidoku::{
 	Chapter, ContentRating, DeepLinkHandler, DeepLinkResult, FilterValue, ImageRequestProvider,
 	Manga, MangaPageResult, MangaStatus, Page, PageContent, PageContext, Result, Source, Viewer,
 	alloc::{String, Vec, vec},
-	imports::{html::Element, net::Request},
+	imports::{defaults::defaults_get, html::Element, net::Request},
 	prelude::*,
 };
 use serde::de::DeserializeOwned;
@@ -168,13 +168,18 @@ impl Source for Webtoons {
 	}
 
 	fn get_page_list(&self, _manga: Manga, chapter: Chapter) -> Result<Vec<Page>> {
+		let max_quality = defaults_get::<bool>("maxQuality").unwrap_or(false);
 		let url = format!("{BASE_URL}{}", chapter.key);
 		let html = request(url, &format!("{BASE_URL}/"))?.html()?;
 		let pages = html
 			.select("div#_imageList > img")
 			.map(|imgs| {
 				imgs.filter_map(|img| {
-					let page_url = img.attr("data-url").or_else(|| img.attr("abs:src"))?;
+					let mut page_url = img.attr("data-url").or_else(|| img.attr("abs:src"))?;
+					// Images default to ?type=q90; dropping it serves full resolution.
+					if max_quality && let Some(idx) = page_url.find("?type=q90") {
+						page_url.truncate(idx);
+					}
 					Some(Page {
 						content: PageContent::Url(page_url, None),
 						..Default::default()

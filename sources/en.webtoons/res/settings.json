@@ -1,0 +1,15 @@
+[
+	{
+		"type": "group",
+		"title": "Reader",
+		"items": [
+			{
+				"type": "switch",
+				"key": "maxQuality",
+				"title": "Use max quality images",
+				"subtitle": "Higher resolution pages (larger downloads)",
+				"default": false
+			}
+		]
+	}
+]
