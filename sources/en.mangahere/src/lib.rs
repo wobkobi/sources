@@ -55,19 +55,50 @@ impl Source for MangaHere {
 		&self,
 		query: Option<String>,
 		page: i32,
-		_filters: Vec<FilterValue>,
+		filters: Vec<FilterValue>,
 	) -> Result<MangaPageResult> {
 		let referer = format!("{BASE_URL}/");
 		let query = query.unwrap_or_default();
-		let (url, selector) = if query.is_empty() {
+
+		let mut included: Vec<String> = Vec::new();
+		let mut excluded: Vec<String> = Vec::new();
+		let mut type_value = String::new();
+		for filter in filters {
+			match filter {
+				FilterValue::MultiSelect {
+					id,
+					included: inc,
+					excluded: exc,
+				} if id == "genre" => {
+					included = inc;
+					excluded = exc;
+				}
+				FilterValue::Select { id, value } if id == "type" => type_value = value,
+				_ => {}
+			}
+		}
+		let filters_active = !included.is_empty()
+			|| !excluded.is_empty()
+			|| (!type_value.is_empty() && type_value != "0");
+
+		let (url, selector) = if query.is_empty() && !filters_active {
 			(
 				format!("{BASE_URL}/directory/{page}.htm"),
 				".manga-list-1-list li",
 			)
 		} else {
 			let encoded = query.replace(' ', "+");
+			let t = if type_value.is_empty() {
+				"0"
+			} else {
+				&type_value
+			};
+			let genres = included.join(",");
+			let nogenres = excluded.join(",");
 			(
-				format!("{BASE_URL}/search?page={page}&title={encoded}"),
+				format!(
+					"{BASE_URL}/search?page={page}&title={encoded}&type={t}&genres={genres}&nogenres={nogenres}&stype=1"
+				),
 				".manga-list-4-list > li",
 			)
 		};

@@ -2,7 +2,7 @@
 	"info": {
 		"id": "en.mangahere",
 		"name": "MangaHere",
-		"version": 1,
+		"version": 2,
 		"url": "https://www.mangahere.cc",
 		"contentRating": 1,
 		"languages": ["en"]
