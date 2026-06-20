@@ -49,10 +49,23 @@ impl Source for MangaPill {
 		&self,
 		query: Option<String>,
 		page: i32,
-		_filters: Vec<FilterValue>,
+		filters: Vec<FilterValue>,
 	) -> Result<MangaPageResult> {
 		let query = query.unwrap_or_default().replace(' ', "+");
-		let url = format!("{BASE_URL}/search?page={page}&q={query}");
+		let mut url = format!("{BASE_URL}/search?page={page}&q={query}");
+		for filter in filters {
+			match filter {
+				FilterValue::Select { id, value } if !value.is_empty() => {
+					url.push_str(&format!("&{id}={}", value.replace(' ', "%20")));
+				}
+				FilterValue::MultiSelect { id, included, .. } => {
+					for value in included {
+						url.push_str(&format!("&{id}={}", value.replace(' ', "%20")));
+					}
+				}
+				_ => {}
+			}
+		}
 		let html = request(url)?.html()?;
 
 		let entries = html
