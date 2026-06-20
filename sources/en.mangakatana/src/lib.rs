@@ -3,7 +3,7 @@ use aidoku::{
 	Chapter, ContentRating, DeepLinkHandler, DeepLinkResult, FilterValue, Manga, MangaPageResult,
 	MangaStatus, Page, PageContent, Result, Source, UpdateStrategy, Viewer,
 	alloc::{String, Vec, vec},
-	imports::{html::Document, html::Element, net::Request},
+	imports::{defaults::defaults_get, html::Document, html::Element, net::Request},
 	prelude::*,
 };
 use chrono::NaiveDate;
@@ -217,7 +217,14 @@ impl Source for MangaKatana {
 	}
 
 	fn get_page_list(&self, _manga: Manga, chapter: Chapter) -> Result<Vec<Page>> {
-		let url = format!("{BASE_URL}{}", chapter.key);
+		// Users can switch the image server in settings (?sv=mk / ?sv=3).
+		let server = defaults_get::<String>("server").unwrap_or_default();
+		let suffix = if server.is_empty() {
+			String::new()
+		} else {
+			format!("?sv={server}")
+		};
+		let url = format!("{BASE_URL}{}{suffix}", chapter.key);
 		let body = request(url)?.send()?.get_string()?;
 
 		let pages = extract_pages(&body)

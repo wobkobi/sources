@@ -1,0 +1,17 @@
+[
+	{
+		"type": "group",
+		"title": "Reader",
+		"footer": "Switch image server if pages fail to load.",
+		"items": [
+			{
+				"type": "select",
+				"key": "server",
+				"title": "Image Server",
+				"values": ["", "mk", "3"],
+				"titles": ["Server 1", "Server 2", "Server 3"],
+				"default": ""
+			}
+		]
+	}
+]
