@@ -2,7 +2,7 @@
 	"info": {
 		"id": "en.fanfox",
 		"name": "MangaFox (FanFox)",
-		"version": 1,
+		"version": 2,
 		"url": "https://fanfox.net",
 		"contentRating": 1,
 		"languages": ["en"]
