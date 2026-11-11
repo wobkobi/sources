@@ -1,10 +1,13 @@
 {
 	"info": {
-		"id": "en.fanfox",
+		"id": "en.mangafox",
 		"name": "MangaFox (FanFox)",
-		"version": 2,
+		"version": 5,
 		"url": "https://fanfox.net",
 		"contentRating": 1,
 		"languages": ["en"]
+	},
+	"config": {
+		"breakingChangeVersion": 5
 	}
 }
