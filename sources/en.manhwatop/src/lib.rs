@@ -1,14 +1,14 @@
 #![no_std]
-use aidoku::{Result, Source, imports::net::Request, prelude::*};
+use aidoku::{Source, prelude::*};
 use madara::{Impl, Madara, Params};
 
 const BASE_URL: &str = "https://manhwatop.com";
 
-// The site sits behind Cloudflare and serves a block page to non-browser
-// User-Agents, so a browser UA is required for every request.
-const USER_AGENT: &str = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) \
-	AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36";
-
+/// The site sits behind Cloudflare, so leave the User-Agent to the app: it
+/// sends the device's own WebView UA and solves any challenge in a WebView
+/// with that same UA. Overriding it (e.g. with a desktop Chrome UA) makes the
+/// "Verify you are human" check loop, because the UA no longer matches the
+/// WebKit engine running the check.
 struct Manhwatop;
 
 impl Impl for Manhwatop {
@@ -23,10 +23,6 @@ impl Impl for Manhwatop {
 			filter_non_manga_items: false,
 			..Default::default()
 		}
-	}
-
-	fn modify_request(&self, _params: &Params, request: Request) -> Result<Request> {
-		Ok(request.header("User-Agent", USER_AGENT))
 	}
 }
 
