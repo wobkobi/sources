@@ -3,8 +3,8 @@
 		"type": "select",
 		"id": "type",
 		"title": "Type",
-		"options": ["All", "Manga", "Novel", "One-Shot", "Doujinshi", "Manhwa", "Manhua", "Oel"],
-		"ids": ["", "manga", "novel", "one-shot", "doujinshi", "manhwa", "manhua", "oel"]
+		"options": ["All", "Manga", "Novel", "One-Shot", "Doujinshi", "Manhua", "Oel"],
+		"ids": ["", "manga", "novel", "one-shot", "doujinshi", "manhua", "oel"]
 	},
 	{
 		"type": "select",
@@ -20,20 +20,20 @@
 		"isGenre": true,
 		"canExclude": false,
 		"options": [
-			"Action", "Adventure", "Cars", "Comedy", "Dementia", "Demons", "Drama", "Ecchi",
-			"Fantasy", "Game", "Harem", "Hentai", "Historical", "Horror", "Josei", "Kids", "Magic",
-			"Martial Arts", "Mecha", "Military", "Music", "Mystery", "Parody", "Police",
-			"Psychological", "Romance", "Samurai", "School", "Sci-Fi", "Seinen", "Shoujo",
-			"Shoujo Ai", "Shounen", "Shounen Ai", "Slice of Life", "Space", "Sports", "Super Power",
-			"Supernatural", "Thriller", "Vampire", "Yaoi", "Yuri"
+			"Action", "Adventure", "Cars", "Comedy", "Dementia", "Demons", "Doujinshi", "Drama",
+			"Ecchi", "Fantasy", "Game", "Gender Bender", "Harem", "Historical", "Horror", "Isekai",
+			"Josei", "Kids", "Magic", "Martial Arts", "Mecha", "Military", "Music", "Mystery",
+			"Parody", "Police", "Psychological", "Romance", "Samurai", "School", "Sci-Fi", "Seinen",
+			"Shoujo", "Shoujo Ai", "Shounen", "Shounen Ai", "Slice of Life", "Space", "Sports",
+			"Super Power", "Supernatural", "Thriller", "Tragedy", "Vampire", "Yaoi", "Yuri"
 		],
 		"ids": [
-			"Action", "Adventure", "Cars", "Comedy", "Dementia", "Demons", "Drama", "Ecchi",
-			"Fantasy", "Game", "Harem", "Hentai", "Historical", "Horror", "Josei", "Kids", "Magic",
-			"Martial Arts", "Mecha", "Military", "Music", "Mystery", "Parody", "Police",
-			"Psychological", "Romance", "Samurai", "School", "Sci-Fi", "Seinen", "Shoujo",
-			"Shoujo Ai", "Shounen", "Shounen Ai", "Slice of Life", "Space", "Sports", "Super Power",
-			"Supernatural", "Thriller", "Vampire", "Yaoi", "Yuri"
+			"Action", "Adventure", "Cars", "Comedy", "Dementia", "Demons", "Doujinshi", "Drama",
+			"Ecchi", "Fantasy", "Game", "Gender Bender", "Harem", "Historical", "Horror", "Isekai",
+			"Josei", "Kids", "Magic", "Martial Arts", "Mecha", "Military", "Music", "Mystery",
+			"Parody", "Police", "Psychological", "Romance", "Samurai", "School", "Sci-Fi", "Seinen",
+			"Shoujo", "Shoujo Ai", "Shounen", "Shounen Ai", "Slice of Life", "Space", "Sports",
+			"Super Power", "Supernatural", "Thriller", "Tragedy", "Vampire", "Yaoi", "Yuri"
 		]
 	}
 ]

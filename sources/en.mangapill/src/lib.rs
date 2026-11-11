@@ -52,20 +52,33 @@ impl Source for MangaPill {
 		filters: Vec<FilterValue>,
 	) -> Result<MangaPageResult> {
 		let query = query.unwrap_or_default().replace(' ', "+");
-		let mut url = format!("{BASE_URL}/search?page={page}&q={query}");
+		let mut params = String::new();
 		for filter in filters {
 			match filter {
 				FilterValue::Select { id, value } if !value.is_empty() => {
-					url.push_str(&format!("&{id}={}", value.replace(' ', "%20")));
+					params.push_str(&format!("&{id}={}", value.replace(' ', "%20")));
 				}
 				FilterValue::MultiSelect { id, included, .. } => {
 					for value in included {
-						url.push_str(&format!("&{id}={}", value.replace(' ', "%20")));
+						params.push_str(&format!("&{id}={}", value.replace(' ', "%20")));
 					}
 				}
 				_ => {}
 			}
 		}
+
+		// The site's search returns nothing without a query or a filter value,
+		// so plain browsing shows the newest additions instead. That listing
+		// ignores ?page and always serves the same single page.
+		let browse_new = query.is_empty() && params.is_empty();
+		if browse_new && page > 1 {
+			return Ok(MangaPageResult::default());
+		}
+		let url = if browse_new {
+			format!("{BASE_URL}/mangas/new")
+		} else {
+			format!("{BASE_URL}/search?page={page}&q={query}{params}")
+		};
 		let html = request(url)?.html()?;
 
 		let entries = html
@@ -73,9 +86,16 @@ impl Source for MangaPill {
 			.map(|els| els.filter_map(|el| parse_entry(&el)).collect::<Vec<_>>())
 			.unwrap_or_default();
 
+		// Pages past the first also carry a "Previous" btn-sm, so match on the label.
+		let has_next_page = !browse_new
+			&& html
+				.select("a.btn.btn-sm")
+				.map(|mut els| els.any(|el| el.text().is_some_and(|t| t.contains("Next"))))
+				.unwrap_or(false);
+
 		Ok(MangaPageResult {
 			entries,
-			has_next_page: html.select_first("a.btn.btn-sm").is_some(),
+			has_next_page,
 		})
 	}
 
@@ -103,9 +123,18 @@ impl Source for MangaPill {
 					.collect()
 			});
 
+			// Info cells are `<div><label>Status</label><div>publishing</div></div>`.
 			let status_text = html
-				.select("div.flex.flex-col span")
-				.map(|els| els.filter_map(|el| el.text()).collect::<Vec<_>>().join(" "))
+				.select("div.grid > div")
+				.and_then(|mut cells| {
+					cells.find(|cell| {
+						cell.select_first("label")
+							.and_then(|l| l.text())
+							.is_some_and(|t| t.trim() == "Status")
+					})
+				})
+				.and_then(|cell| cell.select_first("div"))
+				.and_then(|el| el.text())
 				.unwrap_or_default()
 				.to_lowercase();
 			manga.status = if status_text.contains("publishing") {
