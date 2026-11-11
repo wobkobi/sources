@@ -36,6 +36,31 @@ fn parse_date(text: &str) -> Option<i64> {
 		.map(|dt| dt.and_utc().timestamp())
 }
 
+/// Parse the number at the start of `s`, ignoring trailing text such as the
+/// `v0` revision tag in `c472v0`.
+fn leading_number(s: &str) -> Option<f32> {
+	let end = s
+		.find(|c: char| !c.is_ascii_digit() && c != '.')
+		.unwrap_or(s.len());
+	s[..end].parse().ok()
+}
+
+/// Read (volume, chapter) from a reader path like `/manga/kingdom/v51/c893/1.html`.
+/// The volume segment is optional, and `v00`/`vTBD` mean no volume.
+fn parse_numbers(key: &str) -> (Option<f32>, Option<f32>) {
+	let mut volume = None;
+	let mut chapter = None;
+	// Skip "", "manga" and the series slug so a slug like "v3" isn't misread.
+	for seg in key.split('/').skip(3) {
+		if let Some(n) = seg.strip_prefix('c').and_then(leading_number) {
+			chapter = Some(n);
+		} else if let Some(n) = seg.strip_prefix('v').and_then(leading_number) {
+			volume = Some(n).filter(|v| *v > 0.0);
+		}
+	}
+	(volume, chapter)
+}
+
 fn parse_entry(element: &Element) -> Option<Manga> {
 	let link = element.select_first("a")?;
 	Some(Manga {
@@ -160,8 +185,12 @@ impl Source for MangaHere {
 						.map(|ps| ps.map(|p| p.text().unwrap_or_default()).collect())
 						.unwrap_or_default();
 					let name = texts.first().cloned().unwrap_or_default();
+					let key = strip_domain(&el.attr("abs:href")?);
+					let (volume_number, chapter_number) = parse_numbers(&key);
 					Some(Chapter {
-						key: strip_domain(&el.attr("abs:href")?),
+						key,
+						chapter_number,
+						volume_number,
 						title: Some(name).filter(|t| !t.is_empty()),
 						date_uploaded: texts.last().and_then(|d| parse_date(d)),
 						url: el.attr("abs:href"),
