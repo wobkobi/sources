@@ -1,7 +1,7 @@
 #![no_std]
 use aidoku::{
 	Chapter, ContentRating, DeepLinkHandler, DeepLinkResult, FilterValue, Manga, MangaPageResult,
-	MangaStatus, Page, PageContent, Result, Source, UpdateStrategy, Viewer,
+	MangaStatus, MigrationHandler, Page, PageContent, Result, Source, UpdateStrategy, Viewer,
 	alloc::{String, Vec, vec},
 	imports::{defaults::defaults_get, html::Document, html::Element, net::Request},
 	prelude::*,
@@ -16,8 +16,23 @@ fn request(url: String) -> Result<Request> {
 	Ok(Request::get(url)?.header("Referer", &format!("{BASE_URL}/")))
 }
 
-fn strip_domain(url: &str) -> String {
-	url.strip_prefix(BASE_URL).unwrap_or(url).into()
+/// Turn a site URL or path into a key, swapping the title slug for the literal
+/// `id` so `/manga/go-toubun-no-hanayome.18224/c1` becomes `/manga/id.18224/c1`.
+/// The site serves both forms, and the numeric id survives title renames that
+/// would otherwise orphan library entries.
+fn url_to_key(url: &str) -> String {
+	let path = url.strip_prefix(BASE_URL).unwrap_or(url);
+	let Some(rest) = path.strip_prefix("/manga/") else {
+		return path.into();
+	};
+	let (series, tail) = rest.split_at(rest.find('/').unwrap_or(rest.len()));
+	// rsplit so a slug containing dots (`dr.-stone.12345`) still yields the id.
+	match series.rsplit_once('.') {
+		Some((_, id)) if !id.is_empty() && id.bytes().all(|b| b.is_ascii_digit()) => {
+			format!("/manga/id.{id}{}", tail.trim_end_matches('/'))
+		}
+		_ => path.into(),
+	}
 }
 
 /// Pull a chapter number out of a name like "Chapter 10.5" or "Vol.2 Chapter 7".
@@ -42,7 +57,7 @@ fn parse_date(text: &str) -> Option<i64> {
 fn parse_list_entry(element: &Element) -> Option<Manga> {
 	let link = element.select_first("div.text > h3 > a")?;
 	Some(Manga {
-		key: strip_domain(&link.attr("abs:href")?),
+		key: url_to_key(&link.attr("abs:href")?),
 		title: link.own_text().unwrap_or_default(),
 		cover: element
 			.select_first("img")
@@ -62,7 +77,7 @@ fn single_result(html: &Document) -> Option<Manga> {
 			html.select_first("meta[property='og:url']")
 				.and_then(|el| el.attr("content"))
 		})
-		.map(|u| strip_domain(&u))?;
+		.map(|u| url_to_key(&u))?;
 	Some(Manga {
 		key,
 		title,
@@ -220,7 +235,7 @@ impl Source for MangaKatana {
 					let link = el.select_first("a")?;
 					let name = link.text().unwrap_or_default();
 					Some(Chapter {
-						key: strip_domain(&link.attr("abs:href")?),
+						key: url_to_key(&link.attr("abs:href")?),
 						chapter_number: parse_chapter_number(&name),
 						title: Some(name).filter(|t| !t.is_empty()),
 						date_uploaded: el
@@ -265,27 +280,110 @@ impl DeepLinkHandler for MangaKatana {
 		let Some(path) = url.strip_prefix(BASE_URL) else {
 			return Ok(None);
 		};
-		// Manga: /manga/<slug>.<id>   Chapter: /manga/<slug>.<id>/c<n>
-		if path.starts_with("/manga/") {
-			if let Some((manga_path, _)) = path.split_once("/c") {
-				return Ok(Some(DeepLinkResult::Chapter {
-					manga_key: manga_path.into(),
-					key: path.into(),
-				}));
-			}
-			return Ok(Some(DeepLinkResult::Manga { key: path.into() }));
-		}
-		Ok(None)
+		let path = path.split(['?', '#']).next().unwrap_or_default();
+		// Manga: /manga/id.<id>   Chapter: /manga/id.<id>/c<n>
+		let key = url_to_key(path);
+		let Some(rest) = key.strip_prefix("/manga/id.") else {
+			return Ok(None);
+		};
+		Ok(Some(match rest.split_once('/') {
+			Some((id, _)) => DeepLinkResult::Chapter {
+				manga_key: format!("/manga/id.{id}"),
+				key,
+			},
+			None => DeepLinkResult::Manga { key },
+		}))
 	}
 }
 
-register_source!(MangaKatana, DeepLinkHandler);
+/// Rewrites keys from the legacy en.mangakatana source, which stored the bare
+/// numeric id (`18224`) and chapter segment (`c1`), and from v3 of this one,
+/// which kept the title slug. Already-migrated keys pass through unchanged.
+impl MigrationHandler for MangaKatana {
+	fn handle_manga_migration(&self, key: String) -> Result<String> {
+		Ok(
+			if !key.is_empty() && key.bytes().all(|b| b.is_ascii_digit()) {
+				format!("/manga/id.{key}")
+			} else {
+				url_to_key(&key)
+			},
+		)
+	}
+
+	/// A legacy chapter key holds only `c<n>`, so the series comes from `manga_key`.
+	fn handle_chapter_migration(&self, manga_key: String, chapter_key: String) -> Result<String> {
+		if chapter_key.starts_with('/') {
+			return Ok(url_to_key(&chapter_key));
+		}
+		let manga = self.handle_manga_migration(manga_key)?;
+		Ok(format!("{manga}/{chapter_key}"))
+	}
+}
+
+register_source!(MangaKatana, DeepLinkHandler, MigrationHandler);
 
 #[cfg(test)]
 mod test {
 	use super::MangaKatana;
-	use aidoku::{Source, alloc::string::ToString, alloc::vec};
+	use aidoku::{
+		DeepLinkHandler, DeepLinkResult, MigrationHandler, Source, alloc::string::ToString,
+		alloc::vec,
+	};
 	use aidoku_test::aidoku_test;
+
+	#[aidoku_test]
+	fn key_migration_test() {
+		let source = MangaKatana;
+		let migrate = |key: &str| source.handle_manga_migration(key.to_string()).unwrap();
+		// Legacy, v3 slug form, slug with a dot, and an already-migrated key.
+		assert_eq!(migrate("18224"), "/manga/id.18224");
+		assert_eq!(
+			migrate("/manga/go-toubun-no-hanayome.18224"),
+			"/manga/id.18224"
+		);
+		assert_eq!(migrate("/manga/dr.-stone.12345"), "/manga/id.12345");
+		assert_eq!(migrate("/manga/id.18224"), "/manga/id.18224");
+
+		let chapter = |manga: &str, key: &str| {
+			source
+				.handle_chapter_migration(manga.to_string(), key.to_string())
+				.unwrap()
+		};
+		assert_eq!(chapter("18224", "c1"), "/manga/id.18224/c1");
+		assert_eq!(chapter("18224", "c10.5"), "/manga/id.18224/c10.5");
+		assert_eq!(
+			chapter(
+				"/manga/go-toubun-no-hanayome.18224",
+				"/manga/go-toubun-no-hanayome.18224/c1"
+			),
+			"/manga/id.18224/c1"
+		);
+		assert_eq!(
+			chapter("/manga/id.18224", "/manga/id.18224/c1"),
+			"/manga/id.18224/c1"
+		);
+	}
+
+	#[aidoku_test]
+	fn deep_link_test() {
+		let source = MangaKatana;
+		let link = |url: &str| source.handle_deep_link(url.to_string()).unwrap();
+		// A slug starting with "c" must not be mistaken for a chapter segment.
+		assert_eq!(
+			link("https://mangakatana.com/manga/chainsaw-man.21890"),
+			Some(DeepLinkResult::Manga {
+				key: "/manga/id.21890".to_string()
+			})
+		);
+		assert_eq!(
+			link("https://mangakatana.com/manga/chainsaw-man.21890/c12?sv=mk"),
+			Some(DeepLinkResult::Chapter {
+				manga_key: "/manga/id.21890".to_string(),
+				key: "/manga/id.21890/c12".to_string()
+			})
+		);
+		assert_eq!(link("https://mangakatana.com/latest"), None);
+	}
 
 	#[aidoku_test]
 	fn search_details_pages_test() {

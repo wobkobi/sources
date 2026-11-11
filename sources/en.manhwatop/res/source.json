@@ -2,9 +2,13 @@
 	"info": {
 		"id": "en.manhwatop",
 		"name": "Manhwatop",
-		"version": 1,
+		"version": 3,
+		"minAppVersion": "0.7.1",
 		"url": "https://manhwatop.com",
 		"contentRating": 1,
 		"languages": ["en"]
+	},
+	"config": {
+		"breakingChangeVersion": 3
 	}
 }

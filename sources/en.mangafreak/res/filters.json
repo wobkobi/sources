@@ -4,7 +4,7 @@
 		"id": "type",
 		"title": "Type",
 		"options": ["Both", "Manga", "Manhwa"],
-		"ids": ["0", "2", "1"]
+		"ids": ["0", "1", "2"]
 	},
 	{
 		"type": "select",
@@ -20,17 +20,21 @@
 		"isGenre": true,
 		"canExclude": true,
 		"options": [
-			"Act", "Adult", "Adventure", "Ancients", "Animated", "Comedy", "Demons", "Drama",
-			"Ecchi", "Fantasy", "Gender Bender", "Harem", "Horror", "Josei", "Magic", "Martial Arts",
-			"Mature", "Mecha", "Military", "Mystery", "One Shot", "Psychological", "Romance",
-			"School Life", "Sci Fi", "Seinen", "Shoujo", "Shoujoai", "Shounen", "Shounenai",
-			"Slice Of Life", "Smut", "Sports", "Super Power", "Supernatural", "Tragedy", "Vampire",
-			"Yaoi", "Yuri"
+			"Action", "Actions", "Add", "Adult", "Adventure", "Animated", "Comedy", "Demons",
+			"Drama", "Ecchi", "Fantasy", "Full Color", "Gender Bender", "Harem", "Historical",
+			"Ancients", "Horror", "Isekai", "Josei", "Life", "Lolicon", "Magic", "Manhwa",
+			"Martial Arts", "Mature", "Mecha", "Military", "Mystery", "One Shot", "Psychological",
+			"Reincarnation", "Romance", "School", "School Life", "School Of Life", "Sci Fi",
+			"Seinen", "Shotacon", "Shoujo", "Shoujo Ai", "Shoujoai", "Shounen", "Shounen Ai",
+			"Shounenai", "Slice Of Life", "Smut", "Sports", "Super Power", "Superhero",
+			"Supernatural", "Tragedy", "Vampire", "Villainess", "Web Comic", "Webtoon", "Yaoi",
+			"Yuri"
 		],
 		"ids": [
 			"0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15",
 			"16", "17", "18", "19", "20", "21", "22", "23", "24", "25", "26", "27", "28", "29",
-			"30", "31", "32", "33", "34", "35", "36", "37", "38"
+			"30", "31", "32", "33", "34", "35", "36", "37", "38", "39", "40", "41", "42", "43",
+			"44", "45", "46", "47", "48", "49", "50", "51", "52", "53", "54", "55", "56"
 		]
 	}
 ]

@@ -1,7 +1,8 @@
 #![no_std]
 use aidoku::{
 	Chapter, ContentRating, DeepLinkHandler, DeepLinkResult, FilterValue, ImageRequestProvider,
-	Manga, MangaPageResult, MangaStatus, Page, PageContent, PageContext, Result, Source, Viewer,
+	Manga, MangaPageResult, MangaStatus, MigrationHandler, Page, PageContent, PageContext, Result,
+	Source, Viewer,
 	alloc::{String, Vec},
 	imports::{html::Element, net::Request},
 	prelude::*,
@@ -34,6 +35,31 @@ fn parse_date(text: &str) -> Option<i64> {
 		.ok()
 		.and_then(|d| d.and_hms_opt(0, 0, 0))
 		.map(|dt| dt.and_utc().timestamp())
+}
+
+/// Parse the number at the start of `s`, ignoring trailing text such as the
+/// `v0` revision tag in `c472v0`.
+fn leading_number(s: &str) -> Option<f32> {
+	let end = s
+		.find(|c: char| !c.is_ascii_digit() && c != '.')
+		.unwrap_or(s.len());
+	s[..end].parse().ok()
+}
+
+/// Read (volume, chapter) from a reader path like `/manga/kingdom/v51/c893/1.html`.
+/// The volume segment is optional, and `v00`/`vTBD` mean no volume.
+fn parse_numbers(key: &str) -> (Option<f32>, Option<f32>) {
+	let mut volume = None;
+	let mut chapter = None;
+	// Skip "", "manga" and the series slug so a slug like "v3" isn't misread.
+	for seg in key.split('/').skip(3) {
+		if let Some(n) = seg.strip_prefix('c').and_then(leading_number) {
+			chapter = Some(n);
+		} else if let Some(n) = seg.strip_prefix('v').and_then(leading_number) {
+			volume = Some(n).filter(|v| *v > 0.0);
+		}
+	}
+	(volume, chapter)
 }
 
 fn parse_entry(element: &Element) -> Option<Manga> {
@@ -165,8 +191,12 @@ impl Source for FanFox {
 						.map(|ps| ps.map(|p| p.text().unwrap_or_default()).collect())
 						.unwrap_or_default();
 					let name = texts.first().cloned().unwrap_or_default();
+					let key = strip_domain(&el.attr("abs:href")?);
+					let (volume_number, chapter_number) = parse_numbers(&key);
 					Some(Chapter {
-						key: strip_domain(&el.attr("abs:href")?),
+						key,
+						chapter_number,
+						volume_number,
 						title: Some(name).filter(|t| !t.is_empty()),
 						date_uploaded: texts.last().and_then(|d| parse_date(d)),
 						url: el.attr("abs:href"),
@@ -234,13 +264,61 @@ impl DeepLinkHandler for FanFox {
 	}
 }
 
-register_source!(FanFox, ImageRequestProvider, DeepLinkHandler);
+/// Rewrites keys saved by the legacy en.mangafox source (v4 and earlier), which
+/// stored paths with the `/manga/` prefix and reader page stripped. Keys that
+/// already start with `/manga/` pass through, so running it twice is harmless.
+impl MigrationHandler for FanFox {
+	/// Legacy manga keys were the bare slug, e.g. `kingdom`.
+	fn handle_manga_migration(&self, key: String) -> Result<String> {
+		Ok(if key.starts_with("/manga/") {
+			key
+		} else {
+			format!("/manga/{key}/")
+		})
+	}
+
+	/// Legacy chapter keys were the slug plus volume/chapter, e.g. `kingdom/v51/c893`.
+	fn handle_chapter_migration(&self, _manga_key: String, chapter_key: String) -> Result<String> {
+		Ok(if chapter_key.starts_with("/manga/") {
+			chapter_key
+		} else {
+			format!("/manga/{chapter_key}/1.html")
+		})
+	}
+}
+
+register_source!(
+	FanFox,
+	ImageRequestProvider,
+	DeepLinkHandler,
+	MigrationHandler
+);
 
 #[cfg(test)]
 mod test {
 	use super::FanFox;
-	use aidoku::{Source, alloc::string::ToString, alloc::vec};
+	use aidoku::{MigrationHandler, Source, alloc::string::ToString, alloc::vec};
 	use aidoku_test::aidoku_test;
+
+	#[aidoku_test]
+	fn legacy_key_migration_test() {
+		let source = FanFox;
+		let manga = source
+			.handle_manga_migration("kingdom".to_string())
+			.unwrap();
+		assert_eq!(manga, "/manga/kingdom/");
+		assert_eq!(source.handle_manga_migration(manga.clone()).unwrap(), manga);
+		let chapter = source
+			.handle_chapter_migration("kingdom".to_string(), "kingdom/v51/c893".to_string())
+			.unwrap();
+		assert_eq!(chapter, "/manga/kingdom/v51/c893/1.html");
+		assert_eq!(
+			source
+				.handle_chapter_migration(manga, chapter.clone())
+				.unwrap(),
+			chapter
+		);
+	}
 
 	#[aidoku_test]
 	fn search_details_pages_test() {
