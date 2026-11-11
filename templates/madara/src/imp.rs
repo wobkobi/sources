@@ -394,9 +394,11 @@ pub trait Impl {
 					.strip_prefix_or_self(&params.base_url)
 					.into(),
 				title: manga_link.text()?,
+				// Lazy-loaded covers only carry the URL in `data-src`/`srcset`, with
+				// no `src`, so read them the same way as search and details covers.
 				cover: el
 					.select_first("img")
-					.and_then(|img| img.attr("abs:src").or_else(|| img.attr("data-cfsrc"))),
+					.and_then(|img| img.img_attr(params.use_style_images)),
 				url: manga_link.attr("href"),
 				..Default::default()
 			})
