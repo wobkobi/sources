@@ -1,7 +1,8 @@
 #![no_std]
 use aidoku::{
-	Chapter, ContentRating, DeepLinkHandler, DeepLinkResult, FilterValue, Manga, MangaPageResult,
-	MangaStatus, Page, PageContent, Result, Source, UpdateStrategy, Viewer,
+	Chapter, ContentRating, DeepLinkHandler, DeepLinkResult, FilterValue, ImageRequestProvider,
+	Manga, MangaPageResult, MangaStatus, Page, PageContent, PageContext, Result, Source,
+	UpdateStrategy, Viewer,
 	alloc::{String, Vec},
 	imports::{html::Element, net::Request},
 	prelude::*,
@@ -214,4 +215,12 @@ impl DeepLinkHandler for MangaPill {
 	}
 }
 
-register_source!(MangaPill, DeepLinkHandler);
+/// The image CDN rejects hotlinked requests with a 403 unless the site is
+/// sent as Referer.
+impl ImageRequestProvider for MangaPill {
+	fn get_image_request(&self, url: String, _context: Option<PageContext>) -> Result<Request> {
+		request(url)
+	}
+}
+
+register_source!(MangaPill, ImageRequestProvider, DeepLinkHandler);
