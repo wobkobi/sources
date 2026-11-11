@@ -1,0 +1,128 @@
+{
+  "name": "wobkobi's Sources",
+  "sources": [
+    {
+      "id": "en.asurascans",
+      "name": "Asura Scans",
+      "version": 20,
+      "iconURL": "icons/en.asurascans-v20.png",
+      "downloadURL": "sources/en.asurascans-v20.aix",
+      "languages": [
+        "en"
+      ],
+      "contentRating": 0,
+      "baseURL": "https://asurascans.com",
+      "minAppVersion": "0.7.1"
+    },
+    {
+      "id": "en.mangafox",
+      "name": "MangaFox (FanFox)",
+      "version": 6,
+      "iconURL": "icons/en.mangafox-v6.png",
+      "downloadURL": "sources/en.mangafox-v6.aix",
+      "languages": [
+        "en"
+      ],
+      "contentRating": 1,
+      "baseURL": "https://fanfox.net"
+    },
+    {
+      "id": "en.mangafreak",
+      "name": "Mangafreak",
+      "version": 4,
+      "iconURL": "icons/en.mangafreak-v4.png",
+      "downloadURL": "sources/en.mangafreak-v4.aix",
+      "languages": [
+        "en"
+      ],
+      "contentRating": 0,
+      "baseURL": "https://ww3.mangafreak.me"
+    },
+    {
+      "id": "en.mangahere",
+      "name": "MangaHere",
+      "version": 4,
+      "iconURL": "icons/en.mangahere-v4.png",
+      "downloadURL": "sources/en.mangahere-v4.aix",
+      "languages": [
+        "en"
+      ],
+      "contentRating": 1,
+      "baseURL": "https://www.mangahere.cc"
+    },
+    {
+      "id": "en.mangakatana",
+      "name": "MangaKatana",
+      "version": 5,
+      "iconURL": "icons/en.mangakatana-v5.png",
+      "downloadURL": "sources/en.mangakatana-v5.aix",
+      "languages": [
+        "en"
+      ],
+      "contentRating": 0,
+      "baseURL": "https://mangakatana.com"
+    },
+    {
+      "id": "en.mangapill",
+      "name": "MangaPill",
+      "version": 5,
+      "iconURL": "icons/en.mangapill-v5.png",
+      "downloadURL": "sources/en.mangapill-v5.aix",
+      "languages": [
+        "en"
+      ],
+      "contentRating": 1,
+      "baseURL": "https://mangapill.com"
+    },
+    {
+      "id": "en.manhuaus",
+      "name": "ManhuaUS",
+      "version": 7,
+      "iconURL": "icons/en.manhuaus-v7.png",
+      "downloadURL": "sources/en.manhuaus-v7.aix",
+      "languages": [
+        "en"
+      ],
+      "contentRating": 1,
+      "baseURL": "https://manhuaus.com",
+      "minAppVersion": "0.7.1"
+    },
+    {
+      "id": "en.manhwatop",
+      "name": "Manhwatop",
+      "version": 5,
+      "iconURL": "icons/en.manhwatop-v5.png",
+      "downloadURL": "sources/en.manhwatop-v5.aix",
+      "languages": [
+        "en"
+      ],
+      "contentRating": 1,
+      "baseURL": "https://manhwatop.com",
+      "minAppVersion": "0.7.1"
+    },
+    {
+      "id": "en.tapas",
+      "name": "Tapas",
+      "version": 2,
+      "iconURL": "icons/en.tapas-v2.png",
+      "downloadURL": "sources/en.tapas-v2.aix",
+      "languages": [
+        "en"
+      ],
+      "contentRating": 1,
+      "baseURL": "https://tapas.io"
+    },
+    {
+      "id": "en.webtoons",
+      "name": "WEBTOON",
+      "version": 2,
+      "iconURL": "icons/en.webtoons-v2.png",
+      "downloadURL": "sources/en.webtoons-v2.aix",
+      "languages": [
+        "en"
+      ],
+      "contentRating": 0,
+      "baseURL": "https://www.webtoons.com"
+    }
+  ]
+}
