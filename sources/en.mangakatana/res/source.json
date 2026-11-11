@@ -2,9 +2,12 @@
 	"info": {
 		"id": "en.mangakatana",
 		"name": "MangaKatana",
-		"version": 3,
+		"version": 4,
 		"url": "https://mangakatana.com",
 		"contentRating": 0,
 		"languages": ["en"]
+	},
+	"config": {
+		"breakingChangeVersion": 4
 	}
 }
