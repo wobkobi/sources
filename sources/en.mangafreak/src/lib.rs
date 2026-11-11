@@ -8,7 +8,12 @@ use aidoku::{
 };
 use chrono::NaiveDate;
 
-const BASE_URL: &str = "https://ww2.mangafreak.me";
+const BASE_URL: &str = "https://ww3.mangafreak.me";
+
+/// Number of genre toggles in the site's advanced search (`#genrebox`). The
+/// genre ids in res/filters.json are positions 0..GENRE_COUNT in that same
+/// page order, so re-sync both whenever the site adds or reorders genres.
+const GENRE_COUNT: u32 = 57;
 
 struct Mangafreak;
 
@@ -99,7 +104,7 @@ impl Source for Mangafreak {
 		let status_active = !status_value.is_empty() && status_value != "0";
 		if !included.is_empty() || !excluded.is_empty() || type_active || status_active {
 			// 0 = ignore, 1 = include, 2 = exclude, one digit per genre in order.
-			let genres: String = (0..39u32)
+			let genres: String = (0..GENRE_COUNT)
 				.map(|i| {
 					let id = format!("{i}");
 					if included.contains(&id) {
@@ -121,7 +126,8 @@ impl Source for Mangafreak {
 			} else {
 				&status_value
 			};
-			url.push_str(&format!("/Genre/{genres}/Type/{t}/Status/{s}"));
+			// Same segment order the site's advanced_search.js builds.
+			url.push_str(&format!("/Genre/{genres}/Status/{s}/Type/{t}"));
 		}
 
 		let html = request(url)?.html()?;
@@ -245,9 +251,15 @@ impl Source for Mangafreak {
 
 impl DeepLinkHandler for Mangafreak {
 	fn handle_deep_link(&self, url: String) -> Result<Option<DeepLinkResult>> {
-		let Some(path) = url.strip_prefix(BASE_URL) else {
+		// The site rotates between wwN subdomains, so accept links from any of them.
+		let rest = url
+			.strip_prefix("https://")
+			.or_else(|| url.strip_prefix("http://"))
+			.unwrap_or(&url);
+		let (host, path) = rest.split_at(rest.find('/').unwrap_or(rest.len()));
+		if !host.ends_with("mangafreak.me") {
 			return Ok(None);
-		};
+		}
 		if path.starts_with("/Manga/") {
 			Ok(Some(DeepLinkResult::Manga { key: path.into() }))
 		} else if path.starts_with("/Read") {
