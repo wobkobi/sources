@@ -194,6 +194,12 @@ impl Source for MangaKatana {
 	) -> Result<Manga> {
 		let url = format!("{BASE_URL}{}", manga.key);
 		let html = request(url.clone())?.html()?;
+		// A removed series redirects or 404s to a page without the details title.
+		// Fail instead of returning empty details, which the app would save over
+		// the stored ones (wiping the description, tags and chapter list).
+		if html.select_first("h1.heading").is_none() {
+			bail!("Series not found");
+		}
 
 		if needs_details {
 			manga.url = Some(url);

@@ -2,7 +2,7 @@
 	"info": {
 		"id": "en.mangapill",
 		"name": "MangaPill",
-		"version": 4,
+		"version": 5,
 		"url": "https://mangapill.com",
 		"contentRating": 1,
 		"languages": ["en"]
